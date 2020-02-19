@@ -1,0 +1,23 @@
+version: "2.0"
+services:
+  import:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    environment:
+      - DATA_FOLDER=/data
+      - MSSQL_USER=sa
+      - MSSQL_PASSWORD=olap1234!!olap1234
+    volumes:
+      - ./powerlifting-database/:/data/
+  warehouse:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=olap1234!!olap1234
+    ports:
+      - 1433:1433
+    volumes:
+      - warehouse_data:/var/opt/mssql
+volumes:
+  warehouse_data:
