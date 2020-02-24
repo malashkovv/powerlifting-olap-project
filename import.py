@@ -14,6 +14,6 @@ conn = create_engine(f'mssql+pyodbc://{MSSQL_USER}:{MSSQL_PASSWORD}@warehouse:14
 
 for file_name in ("meets", "openpowerlifting"):
     data = pd.read_csv(f"{DATA_FOLDER}/{file_name}.csv")
-    data.to_sql(file_name, conn, if_exists='replace', schema='stg')
-    result = conn.execute(f'SELECT COUNT(*) FROM [stg].[{file_name}]')
+    data.to_sql(file_name, conn, if_exists='replace', schema='eds')
+    result = conn.execute(f'SELECT COUNT(*) FROM [eds].[{file_name}]')
     print(f"{file_name}: {result.fetchall()[0][0]}")
