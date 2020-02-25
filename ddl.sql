@@ -7,6 +7,13 @@ CREATE SCHEMA eds;
 CREATE SCHEMA stg;
 CREATE SCHEMA adm;
 
+SELECT * FROM stg.powerlifting
+where full_name = 'Sachie DuBose'
+and meet_date = '2016-09-23'
+;
+
+SELECT * FROM stg.powerlifting;
+
 DROP TABLE IF EXISTS stg.powerlifting;
 SELECT Name AS full_name,
        Sex AS gender,
@@ -22,12 +29,36 @@ SELECT Name AS full_name,
        MeetCountry AS country_name,
        MeetState AS state_code,
        MeetTown AS city_name,
-       MeetName AS meet_name
+       MeetName AS meet_name,
+       Equipment AS equipment_name,
+       ISNULL(BestSquatKg, 0) AS best_squat_weight,
+       ISNULL(BestBenchKg, 0) AS best_bench_weight,
+       ISNULL(BestDeadliftKg, 0) AS best_dead_lift_weight,
+       ISNULL(TotalKg, 0) AS total_weight
   INTO stg.powerlifting
   FROM eds.openpowerlifting opl
   JOIN eds.meets m
     ON opl.MeetID = m.MeetID
-;;
+;
+
+DROP TABLE IF EXISTS adm.d_equipment;
+CREATE TABLE adm.d_equipment (
+    equipment_pk INT NOT NULL IDENTITY,
+    equipment_name VARCHAR(50) NOT NULL
+);
+
+MERGE INTO adm.d_equipment trgt
+USING (
+SELECT DISTINCT equipment_name
+  FROM stg.powerlifting src
+ WHERE equipment_name IS NOT NULL
+) src
+ON src.equipment_name = trgt.equipment_name
+WHEN NOT MATCHED THEN INSERT
+(equipment_name)
+VALUES
+(src.equipment_name)
+;
 
 DROP TABLE IF EXISTS adm.d_meet;
 CREATE TABLE adm.d_meet
@@ -121,7 +152,8 @@ CREATE TABLE adm.d_power_lifter (
     full_name VARCHAR(60) NOT NULL,
     gender_code CHAR NOT NULL,
     weight DECIMAL(6, 2) NOT NULL,
-    birth_year INT NOT NULL
+    birth_year INT NOT NULL,
+    CONSTRAINT power_lifter_pk PRIMARY KEY NONCLUSTERED (power_lifter_pk),
 );
 
 MERGE INTO adm.d_power_lifter trgt
@@ -140,3 +172,32 @@ WHEN NOT MATCHED THEN INSERT
 (full_name, gender_code, weight, birth_year) VALUES
 (src.full_name, src.gender, src.weight, src.birth_year)
 ;
+
+DROP TABLE adm.f_power_lifting_event;
+CREATE TABLE adm.f_power_lifting_event (
+    event_date DATE NOT NULL,
+    power_lifter_pk INT NOT NULL,
+    best_squat_weight INT NOT NULL,
+    best_bench_weight INT NOT NULL,
+    best_dead_lift_weight INT NOT NULL,
+    total_weight INT NOT NULL,
+--     CONSTRAINT power_lifter_pk_const PRIMARY KEY NONCLUSTERED (power_lifter_pk),
+    CONSTRAINT power_lifter_fk_const FOREIGN KEY (power_lifter_pk)
+        REFERENCES adm.d_power_lifter (power_lifter_pk)
+);
+
+INSERT INTO adm.f_power_lifting_event
+SELECT s.meet_date AS event_date,
+       dpl.power_lifter_pk,
+       s.best_squat_weight,
+       s.best_bench_weight,
+       s.best_dead_lift_weight,
+       s.total_weight
+  FROM stg.powerlifting s
+  JOIN adm.d_power_lifter dpl
+    ON dpl.full_name = s.full_name
+   AND dpl.birth_year = s.birth_year
+   AND s.gender = dpl.gender_code
+;
+
+SELECT * FROM adm.f_power_lifting_event
