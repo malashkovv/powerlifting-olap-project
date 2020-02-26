@@ -1,4 +1,3 @@
-DROP DATABASE IF EXISTS warehouse;
 CREATE DATABASE warehouse;
 
 USE warehouse;
@@ -6,7 +5,6 @@ USE warehouse;
 CREATE SCHEMA eds;
 CREATE SCHEMA stg;
 CREATE SCHEMA adm;
-
 
 DROP TABLE IF EXISTS adm.d_equipment;
 CREATE TABLE adm.d_equipment (
