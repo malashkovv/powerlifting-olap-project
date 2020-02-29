@@ -30,6 +30,7 @@ DROP TABLE IF EXISTS adm.d_weight_category;
 CREATE TABLE adm.d_weight_category (
     category_pk INT NOT NULL IDENTITY,
     meet_id INT NOT NULL,
+    meet_date DATE NOT NULL,
     federation_name VARCHAR(30) NOT NULL,
     gender_code CHAR NOT NULL,
     weight_class_name VARCHAR(6) NOT NULL,
@@ -41,7 +42,11 @@ DROP TABLE IF EXISTS adm.d_division;
 CREATE TABLE adm.d_division (
     division_pk INT NOT NULL IDENTITY,
     meet_id INT NOT NULL,
+    meet_date DATE NOT NULL,
+    federation_name VARCHAR(30) NOT NULL,
     division_name VARCHAR(50) NOT NULL,
+    normalised_division_name VARCHAR(6) NOT NULL,
+    CONSTRAINT chk_division_name CHECK (normalised_division_name in ('Master','Open','Teen', 'Junior', 'N/A')),
     CONSTRAINT division_pk PRIMARY KEY NONCLUSTERED (division_pk)
 );
 

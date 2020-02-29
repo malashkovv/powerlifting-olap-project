@@ -10,9 +10,16 @@ SELECT Name AS full_name,
            YEAR(CONVERT(DATE, '1900-01-01')),
            YEAR(DATEADD(YEAR, -Age, Date))
        ) AS birth_year,
-       Date AS meet_date,
+       CONVERT(DATE, Date) AS meet_date,
        Place AS meet_place,
        ISNULL(Division, 'N/A') AS division_name,
+       CASE
+            WHEN ISNULL(Division, 'N/A') LIKE '%Mst%' OR ISNULL(Division, 'N/A') LIKE '%Master%' THEN 'Master'
+            WHEN ISNULL(Division, 'N/A') LIKE '%Teen%' THEN 'Teen'
+            WHEN ISNULL(Division, 'N/A') LIKE '%Open%' THEN 'Open'
+            WHEN ISNULL(Division, 'N/A') LIKE '%Junior%' THEN 'Junior'
+            ELSE 'N/A'
+       END AS normalised_division_name,
        ISNULL(WeightClassKg, 'N/A') AS weight_class_name,
        m.MeetID AS meet_id,
        Federation AS federation_name,
@@ -52,7 +59,7 @@ MERGE INTO adm.d_meet trgt
 USING (
     SELECT DISTINCT pl.meet_id                     AS meet_id,
                     pl.meet_name                   AS meet_name,
-                    CONVERT(DATE, pl.meet_date)    AS meet_date,
+                    pl.meet_date                   AS meet_date,
                     pl.country_name                AS country_name,
                     state_code                     AS state_code,
                     pl.city_name                   AS city_name
@@ -73,35 +80,39 @@ WHEN NOT MATCHED THEN
 
 MERGE INTO adm.d_weight_category trgt
 USING (
-     SELECT DISTINCT pl.gender_code AS gender,
-                     pl.federation_name AS federation,
-                     pl.meet_id AS meet_id,
-                     pl.weight_class_name AS weight_class_name
+     SELECT DISTINCT pl.gender_code,
+                     pl.federation_name,
+                     pl.meet_id,
+                     pl.meet_date,
+                     pl.weight_class_name
       FROM stg.powerlifting pl
 ) src
 ON src.weight_class_name = trgt.weight_class_name
-AND src.gender = trgt.gender_code
+AND src.gender_code = trgt.gender_code
 AND src.meet_id = trgt.meet_id
-AND src.federation = trgt.federation_name
+AND src.federation_name = trgt.federation_name
 WHEN NOT MATCHED THEN INSERT
-    (meet_id, federation_name, gender_code, weight_class_name)
+    (meet_id, meet_date, federation_name, gender_code, weight_class_name)
 VALUES
-    (src.meet_id, src.federation, src.gender, src.weight_class_name)
+    (src.meet_id, src.meet_date, src.federation_name, src.gender_code, src.weight_class_name)
 ;
 
 MERGE INTO adm.d_division trgt
 USING (
     SELECT DISTINCT
-           meet_id AS meet_id,
-           division_name AS division_name
+           meet_id,
+           meet_date,
+           federation_name,
+           division_name,
+           normalised_division_name
       FROM stg.powerlifting pl
 ) src
 ON src.meet_id = trgt.meet_id
 AND src.division_name = trgt.division_name
 WHEN NOT MATCHED THEN INSERT
-(meet_id, division_name)
+(meet_id, meet_date, federation_name, division_name, normalised_division_name)
 VALUES
-(src.meet_id, src.division_name)
+(src.meet_id, src.meet_date, src.federation_name, src.division_name, src.normalised_division_name)
 ;
 
 MERGE INTO adm.d_power_lifter trgt
@@ -155,3 +166,6 @@ SELECT s.meet_date AS event_date,
   JOIN adm.d_equipment de
     ON de.equipment_name = s.equipment_name
 ;
+
+SELECT *
+  FROM adm.d_division dd
