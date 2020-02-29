@@ -1,3 +1,5 @@
+USE warehouse;
+
 DROP TABLE IF EXISTS stg.powerlifting;
 SELECT Name AS full_name,
        Sex AS gender,
@@ -80,6 +82,8 @@ USING (
 ) src
 ON src.weight_class_name = trgt.weight_class_name
 AND src.gender = trgt.gender_code
+AND src.meet_id = trgt.meet_id
+AND src.federation = trgt.federation_name
 WHEN NOT MATCHED THEN INSERT
     (meet_id, federation_name, gender_code, weight_class_name)
 VALUES
@@ -114,6 +118,7 @@ USING (
 ON src.full_name = trgt.full_name
 AND src.birth_year = trgt.birth_year
 AND src.gender = trgt.gender_code
+AND src.weight = trgt.weight
 WHEN NOT MATCHED THEN INSERT
 (full_name, gender_code, weight, birth_year) VALUES
 (src.full_name, src.gender, src.weight, src.birth_year)
@@ -137,13 +142,16 @@ SELECT s.meet_date AS event_date,
   JOIN adm.d_power_lifter dpl
     ON dpl.full_name = s.full_name
    AND dpl.birth_year = s.birth_year
-   AND s.gender = dpl.gender_code
+   AND dpl.gender_code = s.gender
+   AND dpl.weight = s.weight
   JOIN adm.d_division dd
     ON dd.division_name = s.division_name
    AND dd.meet_id = s.meet_id
   JOIN adm.d_weight_category dwc
     ON dwc.weight_class_name = s.weight_class_name
    AND dwc.gender_code = s.gender
+   AND dwc.federation_name = s.federation_name
+   AND dwc.meet_id = s.meet_id
   JOIN adm.d_meet dm
     ON dm.meet_id = s.meet_id
   JOIN adm.d_equipment de
