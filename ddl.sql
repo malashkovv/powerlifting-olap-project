@@ -15,7 +15,6 @@ CREATE TABLE adm.d_equipment (
     CONSTRAINT equipment_pk PRIMARY KEY NONCLUSTERED (equipment_pk)
 );
 
-
 DROP TABLE IF EXISTS adm.d_meet;
 CREATE TABLE adm.d_meet
 (
@@ -28,7 +27,6 @@ CREATE TABLE adm.d_meet
     city_name    VARCHAR(100)     NOT NULL,
     CONSTRAINT meet_pk PRIMARY KEY NONCLUSTERED (meet_pk)
 );
-
 
 DROP TABLE IF EXISTS adm.d_weight_category;
 CREATE TABLE adm.d_weight_category (
@@ -68,8 +66,11 @@ CREATE TABLE adm.f_power_lifting_event (
     category_pk INT NOT NULL,
     division_pk INT NOT NULL,
     best_squat_weight INT NOT NULL,
+    squat_weight_4th_attempt INT NOT NULL,
     best_bench_weight INT NOT NULL,
+    bench_weight_4th_attempt INT NOT NULL,
     best_dead_lift_weight INT NOT NULL,
+    dead_lift_weight_4th_attempt INT NOT NULL,
     total_weight INT NOT NULL,
     CONSTRAINT power_lifter_fk_const FOREIGN KEY (power_lifter_pk)
         REFERENCES adm.d_power_lifter (power_lifter_pk),

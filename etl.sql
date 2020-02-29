@@ -20,8 +20,11 @@ SELECT Name AS full_name,
        MeetName AS meet_name,
        Equipment AS equipment_name,
        ISNULL(BestSquatKg, 0) AS best_squat_weight,
+       ISNULL(Squat4Kg, 0) AS squat_4th_attempt,
        ISNULL(BestBenchKg, 0) AS best_bench_weight,
+       ISNULL(Bench4Kg, 0) AS bench_weight_4th_attempt,
        ISNULL(BestDeadliftKg, 0) AS best_dead_lift_weight,
+       ISNULL(Deadlift4Kg, 0) AS dead_lift_weight_4th_attempt,
        ISNULL(TotalKg, 0) AS total_weight
   INTO stg.powerlifting
   FROM eds.openpowerlifting opl
@@ -124,8 +127,11 @@ SELECT s.meet_date AS event_date,
        dwc.category_pk,
        dd.division_pk,
        s.best_squat_weight,
+       s.squat_4th_attempt,
        s.best_bench_weight,
+       s.bench_weight_4th_attempt,
        s.best_dead_lift_weight,
+       s.dead_lift_weight_4th_attempt,
        s.total_weight
   FROM stg.powerlifting s
   JOIN adm.d_power_lifter dpl
