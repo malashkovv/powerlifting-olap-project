@@ -55,7 +55,7 @@ CREATE TABLE adm.d_power_lifter (
     CONSTRAINT power_lifter_pk PRIMARY KEY NONCLUSTERED (power_lifter_pk),
 );
 
-DROP TABLE adm.f_power_lifting_event;
+DROP TABLE IF EXISTS adm.f_power_lifting_event;
 CREATE TABLE adm.f_power_lifting_event (
     event_date DATE NOT NULL,
     power_lifter_pk INT NOT NULL,
