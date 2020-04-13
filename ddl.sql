@@ -60,21 +60,29 @@ CREATE TABLE adm.d_power_lifter (
     CONSTRAINT power_lifter_pk PRIMARY KEY NONCLUSTERED (power_lifter_pk),
 );
 
-DROP TABLE IF EXISTS adm.f_power_lifting_event;
-CREATE TABLE adm.f_power_lifting_event (
+DROP TABLE IF EXISTS adm.f_power_lifting_result;
+CREATE TABLE adm.f_power_lifting_result (
     event_date DATE NOT NULL,
     power_lifter_pk INT NOT NULL,
     meet_pk INT NOT NULL,
     equipment_pk INT NOT NULL,
     category_pk INT NOT NULL,
     division_pk INT NOT NULL,
-    best_squat_weight INT NOT NULL,
-    squat_weight_4th_attempt INT NOT NULL,
-    best_bench_weight INT NOT NULL,
-    bench_weight_4th_attempt INT NOT NULL,
-    best_dead_lift_weight INT NOT NULL,
-    dead_lift_weight_4th_attempt INT NOT NULL,
-    total_weight INT NOT NULL,
+    squat_attempt_success CHAR NOT NULL,
+    best_squat_weight DECIMAL(6, 2) NOT NULL,
+    squat_4th_attempt_weight DECIMAL(6, 2) NOT NULL,
+    bench_attempt_success CHAR NOT NULL,
+    best_bench_weight DECIMAL(6, 2) NOT NULL,
+    bench_4th_attempt_weight DECIMAL(6, 2) NOT NULL,
+    dead_lift_attempt_success CHAR NOT NULL,
+    best_dead_lift_weight DECIMAL(6, 2) NOT NULL,
+    dead_lift_4th_attempt_weight DECIMAL(6, 2) NOT NULL,
+    total_weight DECIMAL(6, 2) NOT NULL,
+    wilks_coefficient FLOAT NOT NULL,
+    place VARCHAR(3) NOT NULL,
+    CONSTRAINT squat_attempt_success_values CHECK (squat_attempt_success in ('Y','N')),
+    CONSTRAINT bench_attempt_success_values CHECK (bench_attempt_success in ('Y','N')),
+    CONSTRAINT dead_lift_attempt_success_values CHECK (dead_lift_attempt_success in ('Y','N')),
     CONSTRAINT power_lifter_fk_const FOREIGN KEY (power_lifter_pk)
         REFERENCES adm.d_power_lifter (power_lifter_pk),
     CONSTRAINT meet_pk_const FOREIGN KEY (meet_pk)

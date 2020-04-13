@@ -11,10 +11,10 @@ SELECT Name AS full_name,
            YEAR(DATEADD(YEAR, -Age, Date))
        ) AS birth_year,
        CONVERT(DATE, Date) AS meet_date,
-       Place AS meet_place,
        ISNULL(Division, 'N/A') AS division_name,
        CASE
-            WHEN ISNULL(Division, 'N/A') LIKE '%Mst%' OR ISNULL(Division, 'N/A') LIKE '%Master%' THEN 'Master'
+            WHEN ISNULL(Division, 'N/A') LIKE '%Mst%'
+                     OR ISNULL(Division, 'N/A') LIKE '%Master%' THEN 'Master'
             WHEN ISNULL(Division, 'N/A') LIKE '%Teen%' THEN 'Teen'
             WHEN ISNULL(Division, 'N/A') LIKE '%Open%' THEN 'Open'
             WHEN ISNULL(Division, 'N/A') LIKE '%Junior%' THEN 'Junior'
@@ -28,13 +28,18 @@ SELECT Name AS full_name,
        ISNULL(MeetTown, 'N/A') AS city_name,
        MeetName AS meet_name,
        Equipment AS equipment_name,
-       ISNULL(BestSquatKg, 0) AS best_squat_weight,
-       ISNULL(Squat4Kg, 0) AS squat_4th_attempt,
-       ISNULL(BestBenchKg, 0) AS best_bench_weight,
-       ISNULL(Bench4Kg, 0) AS bench_weight_4th_attempt,
-       ISNULL(BestDeadliftKg, 0) AS best_dead_lift_weight,
-       ISNULL(Deadlift4Kg, 0) AS dead_lift_weight_4th_attempt,
-       ISNULL(TotalKg, 0) AS total_weight
+       IIF(BestSquatKg < 0, 'N', 'Y') AS squat_attempt_success,
+       ISNULL(ABS(BestSquatKg), 0) AS best_squat_weight,
+       ISNULL(ABS(Squat4Kg), 0) AS squat_4th_attempt_weight,
+       IIF(BestBenchKg < 0, 'N', 'Y') AS bench_attempt_success,
+       ISNULL(ABS(BestBenchKg), 0) AS best_bench_weight,
+       ISNULL(ABS(Bench4Kg), 0) AS bench_4th_attempt_weight,
+       IIF(BestDeadliftKg < 0, 'N', 'Y') AS dead_lift_attempt_success,
+       ISNULL(ABS(BestDeadliftKg), 0) AS best_dead_lift_weight,
+       ISNULL(ABS(Deadlift4Kg), 0) AS dead_lift_4th_attempt_weight,
+       ISNULL(TotalKg, 0) AS total_weight,
+       ISNULL(Wilks, -1) AS wilks_coefficient,
+       ISNULL(Place, 'N/A') AS place
   INTO stg.powerlifting
   FROM eds.openpowerlifting opl
   JOIN eds.meets m
@@ -133,20 +138,45 @@ WHEN NOT MATCHED THEN INSERT
 (src.full_name, src.gender, src.weight, src.birth_year)
 ;
 
-INSERT INTO adm.f_power_lifting_event
+INSERT INTO adm.f_power_lifting_result
+(
+    event_date,
+    power_lifter_pk,
+    meet_pk,
+    equipment_pk,
+    category_pk,
+    division_pk,
+    squat_attempt_success,
+    best_squat_weight,
+    squat_4th_attempt_weight,
+    bench_attempt_success,
+    best_bench_weight,
+    bench_4th_attempt_weight,
+    dead_lift_attempt_success,
+    best_dead_lift_weight,
+    dead_lift_4th_attempt_weight,
+    total_weight,
+    wilks_coefficient,
+    place
+)
 SELECT s.meet_date AS event_date,
        dpl.power_lifter_pk,
        dm.meet_pk,
        de.equipment_pk,
        dwc.category_pk,
        dd.division_pk,
+       s.squat_attempt_success,
        s.best_squat_weight,
-       s.squat_4th_attempt,
+       s.squat_4th_attempt_weight,
+       s.bench_attempt_success,
        s.best_bench_weight,
-       s.bench_weight_4th_attempt,
+       s.bench_4th_attempt_weight,
+       s.dead_lift_attempt_success,
        s.best_dead_lift_weight,
-       s.dead_lift_weight_4th_attempt,
-       s.total_weight
+       s.dead_lift_4th_attempt_weight,
+       s.total_weight,
+       s.wilks_coefficient,
+       s.place
   FROM stg.powerlifting s
   JOIN adm.d_power_lifter dpl
     ON dpl.full_name = s.full_name
@@ -168,4 +198,4 @@ SELECT s.meet_date AS event_date,
 ;
 
 SELECT *
-  FROM adm.d_division dd
+  FROM adm.f_power_lifting_result
