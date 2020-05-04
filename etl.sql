@@ -46,6 +46,21 @@ SELECT Name AS full_name,
     ON opl.MeetID = m.MeetID
 ;
 
+MERGE INTO adm.d_date trgt
+USING (
+SELECT DISTINCT meet_date,
+       YEAR(meet_date) AS meet_year,
+       MONTH(meet_date) AS meet_month,
+       DAY(meet_date) AS meet_day
+  FROM stg.powerlifting src
+) src
+ON src.meet_date = trgt.date
+WHEN NOT MATCHED THEN INSERT
+(date, month, year, day)
+VALUES
+(meet_date, meet_month, meet_year, meet_day)
+;
+
 MERGE INTO adm.d_equipment trgt
 USING (
 SELECT DISTINCT equipment_name
@@ -140,7 +155,7 @@ WHEN NOT MATCHED THEN INSERT
 
 INSERT INTO adm.f_power_lifting_result
 (
-    event_date,
+    date_pk,
     power_lifter_pk,
     meet_pk,
     equipment_pk,
@@ -159,12 +174,12 @@ INSERT INTO adm.f_power_lifting_result
     wilks_coefficient,
     place
 )
-SELECT s.meet_date AS event_date,
+SELECT dd.date_pk,
        dpl.power_lifter_pk,
        dm.meet_pk,
        de.equipment_pk,
        dwc.category_pk,
-       dd.division_pk,
+       dd2.division_pk,
        s.squat_attempt_success,
        s.best_squat_weight,
        s.squat_4th_attempt_weight,
@@ -178,14 +193,16 @@ SELECT s.meet_date AS event_date,
        s.wilks_coefficient,
        s.place
   FROM stg.powerlifting s
+  JOIN adm.d_date dd
+    ON dd.date = s.meet_date
   JOIN adm.d_power_lifter dpl
     ON dpl.full_name = s.full_name
    AND dpl.birth_year = s.birth_year
    AND dpl.gender_code = s.gender_code
    AND dpl.weight = s.weight
-  JOIN adm.d_division dd
-    ON dd.division_name = s.division_name
-   AND dd.meet_id = s.meet_id
+  JOIN adm.d_division dd2
+    ON dd2.division_name = s.division_name
+   AND dd2.meet_id = s.meet_id
   LEFT JOIN adm.d_weight_category dwc
     ON dwc.weight_class_name = s.weight_class_name
    AND dwc.gender_code = s.gender_code
